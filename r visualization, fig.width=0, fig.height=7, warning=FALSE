@@ -1,0 +1,31 @@
+# Define the boundaries of the Night Float week for highlighting
+nf_start <- mdy("04/10/2026")
+nf_end <- mdy("04/18/2026")
+
+# Plot 1: Sleep Duration
+p_sleep <- ggplot(wearable_data, aes(x = Date, y = Sleep_Hours)) +
+  annotate("rect", xmin = nf_start, xmax = nf_end, ymin = -Inf, ymax = Inf, 
+           alpha = 0.2, fill = "red") +
+  geom_col(aes(fill = Shift), alpha = 0.8) +
+  geom_line(aes(y = Sleep_Rolling_Avg), color = "black", size = 1, linetype = "dashed") +
+  scale_fill_npg() +
+  theme_minimal() +
+  labs(title = "Total Sleep Time vs. Shift Schedule",
+       y = "Hours of Sleep", x = "") +
+  theme(legend.position = "none")
+
+# Plot 2: Heart Rate Variability (HRV)
+p_hrv <- ggplot(wearable_data, aes(x = Date, y = HRV_Raw)) +
+  annotate("rect", xmin = nf_start, xmax = nf_end, ymin = -Inf, ymax = Inf, 
+           alpha = 0.2, fill = "red") +
+  geom_point(aes(color = Shift), size = 3, alpha = 0.6) +
+  geom_line(aes(y = HRV_Rolling_Avg), color = "firebrick", size = 1.5) +
+  scale_color_npg() +
+  theme_minimal() +
+  labs(title = "Autonomic Nervous System Recovery (HRV)",
+       subtitle = "Dots = Daily RMSSD, Red Line = 3-Day Rolling Average",
+       y = "HRV (ms)", x = "Date") +
+  theme(legend.position = "bottom")
+
+# Combine plots using patchwork (stacked vertically)
+p_sleep / p_hrv
