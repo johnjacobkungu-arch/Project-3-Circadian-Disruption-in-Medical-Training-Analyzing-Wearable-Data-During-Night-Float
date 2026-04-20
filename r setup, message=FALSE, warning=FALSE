@@ -1,0 +1,41 @@
+# Load essential libraries
+library(tidyverse)
+library(lubridate)
+library(zoo)       # For rolling averages
+library(patchwork) # For combining multiple plots side-by-side
+library(ggsci)
+
+set.seed(123)
+
+# Generate 30 days of data
+dates <- seq(mdy("04/01/2026"), mdy("04/30/2026"), by = "day")
+
+# Define the shift schedule
+shift_type <- c(rep("Day Shift", 10), rep("Night Float", 7), rep("Recovery", 13))
+
+# Simulate physiological metrics
+wearable_data <- tibble(
+  Date = dates,
+  Shift = factor(shift_type, levels = c("Day Shift", "Night Float", "Recovery")),
+  
+  # Sleep drops drastically during night float
+  Sleep_Hours = case_when(
+    Shift == "Day Shift" ~ rnorm(10, mean = 7.5, sd = 0.5),
+    Shift == "Night Float" ~ rnorm(7, mean = 4.5, sd = 1.2),
+    Shift == "Recovery" ~ rnorm(13, mean = 8.0, sd = 0.8)
+  ),
+  
+  # HRV (RMSSD in ms) plummets during stress, slowly recovers
+  HRV_Raw = case_when(
+    Shift == "Day Shift" ~ rnorm(10, mean = 65, sd = 8),
+    Shift == "Night Float" ~ rnorm(7, mean = 35, sd = 6),
+    Shift == "Recovery" ~ seq(40, 68, length.out = 13) + rnorm(13, mean = 0, sd = 5)
+  )
+) %>%
+  # Calculate 3-day rolling averages to smooth the noise
+  mutate(
+    HRV_Rolling_Avg = rollmean(HRV_Raw, k = 3, fill = NA, align = "right"),
+    Sleep_Rolling_Avg = rollmean(Sleep_Hours, k = 3, fill = NA, align = "right")
+  )
+
+head(wearable_data)
